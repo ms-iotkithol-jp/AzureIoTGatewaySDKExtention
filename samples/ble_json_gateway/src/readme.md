@@ -8,7 +8,9 @@ This sample is extention of ble_gateway. Extended features are following.
 
 ## Setup 
 * Raspberry Pi3 - please refer [https://github.com/Azure/azure-iot-gateway-sdk/blob/master/doc/devbox_setup.md#linux](https://github.com/Azure/azure-iot-gateway-sdk/blob/master/doc/devbox_setup.md#linux) 
-* Connect Sensor Tag to Raspberry Pi3 - please refere [https://github.com/Azure/azure-iot-gateway-sdk/blob/master/samples/ble_gateway/connecting_to_ble_device_on_rpi3.md](https://github.com/Azure/azure-iot-gateway-sdk/blob/master/samples/ble_gateway/connecting_to_ble_device_on_rpi3.md)
+* Connect Sensor Tag to Raspberry Pi3 - please refere 
+[https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-gateway-sdk-physical-device](https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-gateway-sdk-physical-device)
+※ Current description of [https://github.com/Azure/azure-iot-gateway-sdk/blob/master/samples/ble_gateway/connecting_to_ble_device_on_rpi3.md](https://github.com/Azure/azure-iot-gateway-sdk/blob/master/samples/ble_gateway/connecting_to_ble_device_on_rpi3.md) is lack something. 
 * Overwrite copy modules and samples directories. Modified and added files are 
     * modules/CMakeLists.txt 
     * modules/ble/inc/
