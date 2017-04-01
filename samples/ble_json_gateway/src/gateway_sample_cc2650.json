@@ -93,7 +93,7 @@
           {
             "type": "write_at_init",
             "characteristic_uuid": "F000AA82-0451-4000-B000-000000000000",
-            "data": "HwA="
+            "data": "/wA="
           },
           {
             "type": "read_periodic",
