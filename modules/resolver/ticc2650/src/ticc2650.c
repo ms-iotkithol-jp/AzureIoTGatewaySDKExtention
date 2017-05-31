@@ -126,6 +126,7 @@ static void sensortag_temp_convert(
 }
 static void resolve_temperature(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 4) {
 		uint16_t* temps = (uint16_t *)buffer->buffer;
 		float ambient, object;
@@ -144,6 +145,7 @@ static void resolve_temperature(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const ch
 
 static void resolve_pressure(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 6) {
 		unsigned char tempBuf[4];
 		unsigned char pressBuf[4];
@@ -170,7 +172,7 @@ static void resolve_pressure(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char*
 //	return STRING_construct(resolveTempBuf);
 }
 
-static STRING_HANDLE sensortag_hum_convert(
+static void sensortag_hum_convert(
 	uint16_t rawTemp,
 	uint16_t rawHum,
 	float *tTemp,
@@ -183,6 +185,7 @@ static STRING_HANDLE sensortag_hum_convert(
 
 static void resolve_humidity(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 4) {
 		uint16_t* temps = (uint16_t *)buffer->buffer;
 		float temp, hum;
@@ -248,6 +251,7 @@ float sensorMpu9250MagConvert(int16_t data)
 
 static void resolve_movement(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 18) {
 		int16_t* rawdata = (int16_t*)buffer->buffer;
 		float gyrox = sensorMpu9250GyroConvert(rawdata[0]);
@@ -279,6 +283,7 @@ static void resolve_movement(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char*
 
 static void resolve_brightness(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 2)
 	{
 		uint16_t* temps = (uint16_t *)buffer->buffer;
@@ -297,6 +302,9 @@ static void resolve_brightness(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const cha
 
 static void resolve_default(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)handle;
+    (void)name;
+    (void)buffer;
     /*
 	STRING_HANDLE result = STRING_construct("\"");
 	STRING_concat(result, name);
@@ -439,8 +447,8 @@ void TI_CC2650_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
                 const char* source = ConstMap_GetValue(props, GW_SOURCE_PROPERTY);
                 if (source != NULL && strcmp(source, GW_SOURCE_BLE_TELEMETRY) == 0)
                 {
-                    const char* ble_controller_id = ConstMap_GetValue(props, GW_BLE_CONTROLLER_INDEX_PROPERTY);
-                    const char* mac_address_str = ConstMap_GetValue(props, GW_MAC_ADDRESS_PROPERTY);
+               //     const char* ble_controller_id = ConstMap_GetValue(props, GW_BLE_CONTROLLER_INDEX_PROPERTY);
+             //       const char* mac_address_str = ConstMap_GetValue(props, GW_MAC_ADDRESS_PROPERTY);
                     const char* timestamp = ConstMap_GetValue(props, GW_TIMESTAMP_PROPERTY);
                     const char* characteristic_uuid = ConstMap_GetValue(props, GW_CHARACTERISTIC_UUID_PROPERTY);
                     const CONSTBUFFER* buffer = Message_GetContent(message);
@@ -570,6 +578,7 @@ void TI_CC2650_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
 
 void TI_CC2650_Resolver_Destroy(MODULE_HANDLE module)
 {
+    (void)module;
     // Nothing to do here
 }
 
@@ -581,8 +590,8 @@ static const MODULE_API_1 Module_GetApi_Impl =
     TI_CC2650_Resolver_FreeConfiguration,
     TI_CC2650_Resolver_Create,
     TI_CC2650_Resolver_Destroy,
-    TI_CC2650_Resolver_Receive
-
+    TI_CC2650_Resolver_Receive,
+    NULL
 };
 
 MODULE_EXPORT const MODULE_API* Module_GetApi(MODULE_API_VERSION gateway_api_version)

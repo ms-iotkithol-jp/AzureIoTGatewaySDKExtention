@@ -115,6 +115,7 @@ size_t g_dispatch_entries_length = sizeof(g_dispatch_entries) / sizeof(g_dispatc
 // http://processors.wiki.ti.com/images/a/a8/BLE_SensorTag_GATT_Server.pdf
 static void resolve_temperature(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 4) {
 		uint16_t* temps = (uint16_t *)buffer->buffer;
 		float ambient, object;
@@ -130,7 +131,7 @@ static void resolve_temperature(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const ch
 		const double b2 = 4.63E-9;
 		const double c2 = 13.4;
 		const double tref = 298.15;
-		double s = 50 * (1 + a1*(tdie2 - tref) + a2*(tdie2 - tref)*(tdie2 - tref));
+		double s = s0 * (1 + a1*(tdie2 - tref) + a2*(tdie2 - tref)*(tdie2 - tref));
 		double vos = b0 + b1*(tdie2 - tref) + b2*(tdie2 - tref)*(tdie2 - tref);
 		double fobj = (vobj2 - vos) + c2*(vobj2 - vos)*(vobj2 - vos);
 		double tobj = pow(pow(tdie2, 4) + (fobj / s), 0.25);
@@ -150,9 +151,9 @@ static void resolve_temperature(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const ch
 
 static void resolve_pressure(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 4 && ((handle->flag & SENSOR_MASK_PRESSURE_CARIB) != 0)) {
 		uint16_t* presses = (uint16_t *)buffer->buffer;
-		uint16_t rawP = presses[1];
 
 		int64_t s, o, pres, val;
 		uint16_t c3, c4;
@@ -197,6 +198,7 @@ static void resolve_pressure(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const char*
 
 static void resolve_pressure_calib(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 16) {
 		size_t i = 0;
 		uint16_t* ptr = (uint16_t*)buffer->buffer;
@@ -219,6 +221,7 @@ static void resolve_pressure_calib(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const
 
 static void resolve_humidity(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 4) {
 		uint16_t* hums = (uint16_t *)buffer->buffer;
 		float htemp, humidity;
@@ -239,6 +242,7 @@ static void resolve_humidity(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const char*
 
 static void resolve_accelerometer(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)name;
 	if (buffer->size == 3) {
 		int8_t* accel = (int8_t*)buffer->buffer;
 		float accelx = ((float)accel[0]) / 64;
@@ -258,6 +262,9 @@ static void resolve_accelerometer(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const 
 
 static void resolve_default(TI_CC2541_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer)
 {
+    (void)handle;
+    (void)name;
+    (void)buffer;
     /*
 	STRING_HANDLE result = STRING_construct("\"");
 	STRING_concat(result, name);
@@ -388,8 +395,8 @@ void TI_CC2541_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
                 {
                     handle = (TI_CC2541_RESOLVER_HANDLE_DATA*)module;
 
-                    const char* ble_controller_id = ConstMap_GetValue(props, GW_BLE_CONTROLLER_INDEX_PROPERTY);
-                    const char* mac_address_str = ConstMap_GetValue(props, GW_MAC_ADDRESS_PROPERTY);
+             //       const char* ble_controller_id = ConstMap_GetValue(props, GW_BLE_CONTROLLER_INDEX_PROPERTY);
+              //      const char* mac_address_str = ConstMap_GetValue(props, GW_MAC_ADDRESS_PROPERTY);
                     const char* timestamp = ConstMap_GetValue(props, GW_TIMESTAMP_PROPERTY);
                     const char* characteristic_uuid = ConstMap_GetValue(props, GW_CHARACTERISTIC_UUID_PROPERTY);
                     const CONSTBUFFER* buffer = Message_GetContent(message);
@@ -493,6 +500,7 @@ void TI_CC2541_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
 
 void TI_CC2541_Resolver_Destroy(MODULE_HANDLE module)
 {
+    (void)module;
     // Nothing to do here
 }
 
@@ -504,8 +512,8 @@ static const MODULE_API_1 Module_GetApi_Impl =
     TI_CC2541_Resolver_FreeConfiguration,
     TI_CC2541_Resolver_Create,
     TI_CC2541_Resolver_Destroy,
-    TI_CC2541_Resolver_Receive
-
+    TI_CC2541_Resolver_Receive,
+    NULL
 };
 
 MODULE_EXPORT const MODULE_API* Module_GetApi(MODULE_API_VERSION gateway_api_version)
