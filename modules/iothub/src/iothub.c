@@ -461,9 +461,20 @@ void IoTHub_TwinPropertiesCallback(DEVICE_TWIN_UPDATE_STATE update_state, const 
         }
         else
         {
-            if (Map_AddOrUpdate(propertiesMap, "deviceName", STRING_c_str(personality->deviceName)) != MAP_OK
-              || Map_AddOrUpdate(propertiesMap, "deviceKey", STRING_c_str(personality->deviceKey))!= MAP_OK
-              || Map_AddOrUpdate(propertiesMap, "udateState", ENUM_TO_STRING(DEVICE_TWIN_UPDATE_STATE, update_state))!= MAP_OK )
+            char* state = "unknown";
+            switch(update_state)
+            {
+                case DEVICE_TWIN_UPDATE_COMPLETE:
+                    state = "UPDATE_COMPLETE";
+                    break;
+                case DEVICE_TWIN_UPDATE_PARTIAL:
+                    state = "UPDATE_PARTIAL";
+                    break;
+            }
+            if (Map_Add(propertiesMap, GW_SOURCE_PROPERTY, GW_IOTHUB_MODULE) == MAP_OK
+              && Map_AddOrUpdate(propertiesMap, "deviceName", STRING_c_str(personality->deviceName)) == MAP_OK
+              && Map_AddOrUpdate(propertiesMap, "deviceKey", STRING_c_str(personality->deviceKey)) == MAP_OK
+              && Map_AddOrUpdate(propertiesMap, "udateState", state) == MAP_OK )
             {
                 msgConfig.size = size;
                 msgConfig.source = (unsigned char*)payload;
@@ -477,6 +488,10 @@ void IoTHub_TwinPropertiesCallback(DEVICE_TWIN_UPDATE_STATE update_state, const 
                 {
                     (void)Broker_Publish(personality->broker, personality->module, twinDPMsg);
                 }
+            }
+            else
+            {
+                LogError("Received Update Twin Properties but failed to add properties into message");
             }
         }
     }
@@ -502,9 +517,10 @@ int IoTHub_TwinMethodCallback(const char* method_name, const unsigned char* payl
         }
         else
         {
-            if (Map_AddOrUpdate(propertiesMap, "deviceName", STRING_c_str(personality->deviceName)) != MAP_OK
-              || Map_AddOrUpdate(propertiesMap, "deviceKey", STRING_c_str(personality->deviceKey))!= MAP_OK
-              || Map_AddOrUpdate(propertiesMap, "method", method_name)!= MAP_OK)
+            if (Map_Add(propertiesMap, GW_SOURCE_PROPERTY, GW_IOTHUB_MODULE) == MAP_OK
+              && Map_AddOrUpdate(propertiesMap, "deviceName", STRING_c_str(personality->deviceName)) == MAP_OK
+              && Map_AddOrUpdate(propertiesMap, "deviceKey", STRING_c_str(personality->deviceKey)) == MAP_OK
+              && Map_AddOrUpdate(propertiesMap, "method", method_name) == MAP_OK)
             {
                 msgConfig.size = size;
                 msgConfig.source = (unsigned char*)payload;
@@ -518,6 +534,10 @@ int IoTHub_TwinMethodCallback(const char* method_name, const unsigned char* payl
                 {
                     (void)Broker_Publish(personality->broker, personality->module, twinDPMsg);
                 }
+            }
+            else
+            {
+                LogError("Received method invocation but failed to create message");
             }
         }
     }
@@ -588,25 +608,29 @@ static PERSONALITY_PTR PERSONALITY_create(const char* deviceName, const char* de
                 }
                 else
                 {
-                    // add twin properties and invoke method call back
-                    if (IoTHubClient_SetDeviceTwinCallback(result->iothubHandle, IoTHub_TwinPropertiesCallback, result) != IOTHUB_CLIENT_OK)
+                    if (moduleHandleData->transportProvider==MQTT_Protocol)
                     {
-                        /* error handling */
-                        LogError("Failed to SetDeviceTwinCallback");
-                    }
-                    else
-                    {
-                        if(IoTHubClient_SetDeviceMethodCallback(result->iothubHandle, IoTHub_TwinMethodCallback, result) != IOTHUB_CLIENT_OK)
+                        // add twin properties and invoke method call back
+                        if (IoTHubClient_SetDeviceTwinCallback(result->iothubHandle, IoTHub_TwinPropertiesCallback, result) != IOTHUB_CLIENT_OK)
                         {
                             /* error handling */
-                            LogError("Failed to SetDeviceTwinMethod");
+                            LogError("Failed to SetDeviceTwinCallback");
                         }
                         else
                         {
-                            /*it is all fine*/
-                            result->broker = moduleHandleData->broker;
-                            result->module = moduleHandleData;
+                            if(IoTHubClient_SetDeviceMethodCallback(result->iothubHandle, IoTHub_TwinMethodCallback, result) != IOTHUB_CLIENT_OK)
+                            {
+                            /* error handling */
+                                LogError("Failed to SetDeviceTwinMethod");
+                            }
+                            else
+                            {
+                                LogInfo("Current Protocol is MQTT so that Device Twin Callback registrated.");
+                            }
                         }
+                        /*it is all fine*/
+                        result->broker = moduleHandleData->broker;
+                        result->module = moduleHandleData;
                     }
                 }
             }

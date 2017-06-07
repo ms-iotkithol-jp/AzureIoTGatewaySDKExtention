@@ -511,22 +511,25 @@ static void IdentityMap_Start(MODULE_HANDLE module)
             }
             else
             {
-                if (Map_AddOrUpdate(propertiesMap, "deviceName", macToDevIdArray->deviceId) != MAP_OK)
+                if (Map_AddOrUpdate(propertiesMap, "deviceName", macToDevIdArray->deviceId) == MAP_OK)
                 {
-                    if (Map_AddOrUpdate(propertiesMap, "deviceKey", macToDevIdArray->deviceKey)!= MAP_OK)
+                    if (Map_AddOrUpdate(propertiesMap, "deviceKey", macToDevIdArray->deviceKey) == MAP_OK)
                     {
-                        msgConfig.size = (size_t)strlen("-");
-                        msgConfig.source = (unsigned char*)"-";
-                        msgConfig.sourceProperties = propertiesMap;
-    
-                        MESSAGE_HANDLE irMsg = Message_Create(&msgConfig);
-                        if (irMsg == NULL)
+                        if (Map_AddOrUpdate(propertiesMap, GW_SOURCE_PROPERTY, GW_IDMAP_MODULE)==MAP_OK)
                         {
-                            LogError("unable to create \"intial registration message\" message");
-                        }
-                        else
-                        {
-                            (void)Broker_Publish(idModule->broker, module, irMsg);
+                            msgConfig.size = (size_t)strlen("-");
+                            msgConfig.source = (unsigned char*)"-";
+                            msgConfig.sourceProperties = propertiesMap;
+                            
+                            MESSAGE_HANDLE irMsg = Message_Create(&msgConfig);
+                            if (irMsg == NULL)
+                            {
+                                LogError("unable to create \"intial registration message\" message");
+                            }
+                            else
+                            {
+                                (void)Broker_Publish(idModule->broker, module, irMsg);
+                            }
                         }
                     }
                 }
