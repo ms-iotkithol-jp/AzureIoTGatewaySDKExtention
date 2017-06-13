@@ -22,15 +22,18 @@
           "module.path": "build/modules/resolver/ticc2650/libticc2650.so"
         }
       },
-      "args": {
-        "sensor-types":[
-          {"sensor-type":"temperature"},
-          {"sensor-type":"humidity"},
-          {"sensor-type":"pressure"},
-          {"sensor-type":"movement"},
-          {"sensor-type":"brightness"}
+      "args": [
+          {
+            "sensor-tag":"<<Sensor Tag MAC ADDRESS - AA:BB:CC:DD:EE:FF>>",
+            "sensor-types":[
+              {"sensor-type":"temperature"},
+              {"sensor-type":"humidity"},
+              {"sensor-type":"pressure"},
+              {"sensor-type":"movement"},
+              {"sensor-type":"brightness"}
+            ]
+          }
         ]
-      }
     },
     {
       "name": "mapping",

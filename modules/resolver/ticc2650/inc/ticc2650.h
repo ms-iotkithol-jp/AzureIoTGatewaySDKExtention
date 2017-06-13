@@ -17,6 +17,8 @@ extern "C"
 #define SENSOR_TYPE_MOVEMENT    "movement"
 #define SENSOR_TPYE_BRIGHTNESS  "brightness"
 
+#define TARGETS_JSON             "targets"
+#define SENSOR_TAG_JSON         "sensor-tag"
 #define SENSOR_TYPES_JSON       "sensor-types"
 #define SENSOR_TYPE_JSON        "sensor-type"
 #define SENSOR_CONFIG_JSON      "config"
@@ -25,6 +27,8 @@ typedef struct TICC2650_CONFIG_TAG
 {
     int availables;
     int accRange;
+    char* macAddress;
+    void* nextEntry;
 } TICC2650_CONFIG;
 
 #ifdef __cplusplus

@@ -52,6 +52,8 @@ typedef struct TI_CC2650_RESOLVER_HANDLE_DATA_TAG
     double lastBrightness;
     int flag;
     int availables;
+    char* macAddress;
+    void* nextEntry;
 } TI_CC2650_RESOLVER_HANDLE_DATA;
 
 typedef void (*MESSAGE_RESOLVER)(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char* name, const CONSTBUFFER* buffer);
@@ -321,29 +323,43 @@ static void resolve_default(TI_CC2650_RESOLVER_HANDLE_DATA* handle, const char* 
 
 MODULE_HANDLE TI_CC2650_Resolver_Create(BROKER_HANDLE broker, const void* configuration)
 {
-    TI_CC2650_RESOLVER_HANDLE_DATA* result;
-        if(broker == NULL)
+    TI_CC2650_RESOLVER_HANDLE_DATA* result = NULL;
+    if(broker == NULL)
     {
         LogError("NULL parameter detected broker=%p", broker);
         result = NULL;
     }
     else
     {
-        result = (TI_CC2650_RESOLVER_HANDLE_DATA*)malloc(sizeof(TI_CC2650_RESOLVER_HANDLE_DATA));
-        if (result == NULL)
-        {
-            /*Codes_SRS_BLE_CTOD_13_002: [ TI_CC2650_RESOLVER_Create shall return NULL if any of the underlying platform calls fail. ]*/
-            LogError("malloc failed");
-        }
-        else
-        {
-            result->broker = broker;
-            result->flag = 0x00000000;
-      //      result->availables = SENSOR_MASK_TEMPERATURE | SENSOR_MASK_HUMIDITY | SENSOR_MASK_PRESSURE | SENSOR_MASK_MOVEMENT | SENSOR_MASK_BRIGHTNESS;
-            if (configuration!=NULL){
-                TICC2650_CONFIG* config = (TICC2650_CONFIG*)configuration;
-                result->availables = config->availables;
+        TICC2650_CONFIG* config = (TICC2650_CONFIG*)configuration;
+        TI_CC2650_RESOLVER_HANDLE_DATA* lastResult = NULL;
+        while (config!=NULL){
+            TI_CC2650_RESOLVER_HANDLE_DATA* cresult = (TI_CC2650_RESOLVER_HANDLE_DATA*)malloc(sizeof(TI_CC2650_RESOLVER_HANDLE_DATA));
+            if (cresult == NULL)
+            {
+                /*Codes_SRS_BLE_CTOD_13_002: [ TI_CC2650_RESOLVER_Create shall return NULL if any of the underlying platform calls fail. ]*/
+                LogError("malloc failed");
             }
+            else
+            {
+                cresult->broker = broker;
+                cresult->flag = 0x00000000;
+//                if (configuration!=NULL){
+  //                  TICC2650_CONFIG* config = (TICC2650_CONFIG*)configuration;
+                cresult->availables = config->availables;
+            //    }
+                cresult->macAddress = (char*)malloc(strlen(config->macAddress)+1);
+                strcpy(cresult->macAddress, config->macAddress);
+                if(result==NULL){
+                    result = cresult;
+                }
+                else {
+                    lastResult->nextEntry = cresult;
+                }
+                cresult->nextEntry = NULL;
+                lastResult = cresult;
+            }
+            config = config->nextEntry;
         }
     }
     
@@ -363,54 +379,79 @@ MODULE_HANDLE TI_CC2650_Resolver_Create(BROKER_HANDLE broker, const void* config
 */
 void* TI_CC2650_Resolver_ParseConfigurationFromJson(const char* configuration)
 {
+    TICC2650_CONFIG* configTop = NULL;
     TICC2650_CONFIG* config = NULL;
     if (configuration!=NULL){
         JSON_Value* json = json_parse_string((const char*)configuration);
-        if (json == NULL){
+        if (json == NULL)
+        {
             // error
+            LogError("Failed to parse json configuration");
         }
         else {
-            JSON_Object* root = json_value_get_object(json);
-            if (root==NULL){
+            JSON_Array* targets = json_value_get_array(json);
+            if (targets==NULL){
                 // error
+                LogError("Failed to parse json configuration");
             }
             else {
-                config = (TICC2650_CONFIG*)malloc(sizeof(TICC2650_CONFIG));
-                config->availables = 0;
-                config->accRange = 0;
-                JSON_Array* sensorTypes = json_object_get_array(root,SENSOR_TYPES_JSON);
-                if (sensorTypes==NULL){
-                    // error
-                }
-                else{
-                    size_t count = json_array_get_count(sensorTypes);
-                    for (size_t i=0;i<count;i++){
-                        JSON_Object* sensorType = json_array_get_object(sensorTypes,i);
-                        if (sensorType==NULL){
-                            // error
-                        }
-                        const char* typeName = json_object_get_string(sensorType,SENSOR_TYPE_JSON);
-                        if (typeName == NULL){
-                            // error
-                        }
-                        else {
-                            if (g_ascii_strcasecmp(typeName, SENSOR_TYPE_TEMPERATURE)==0){
-                                config->availables |= SENSOR_MASK_TEMPERATURE;
-                            } else if (g_ascii_strcasecmp(typeName, SENSOR_TYPE_HUMIDITY)==0){
-                                config->availables |= SENSOR_MASK_HUMIDITY;
-                            } else if (g_ascii_strcasecmp(typeName, SENSOR_TYPE_PRESSURE)==0){
-                                config->availables |= SENSOR_MASK_PRESSURE;                                
-                            } else if (g_ascii_strcasecmp(typeName, SENSOR_TYPE_MOVEMENT)==0){
-                                config->availables |= SENSOR_MASK_MOVEMENT;
-                                const char* movementConfig = json_object_get_string(sensorType,SENSOR_CONFIG_JSON);
-                                if (movementConfig!=NULL){
-                                    // set accRange
-                                }
-                            }else if (g_ascii_strcasecmp(typeName, SENSOR_TPYE_BRIGHTNESS)==0){
-                                config->availables |= SENSOR_MASK_BRIGHTNESS;
+                size_t tcount = json_array_get_count(targets);
+                for(size_t t=0;t<tcount;t++)
+                {
+                    JSON_Object* target = json_array_get_object(targets, t);
+                    // this should be sensor-tag, sensor-SENSOR_TYPES_JSON
+                    TICC2650_CONFIG* configTemp = (TICC2650_CONFIG*)malloc(sizeof(TICC2650_CONFIG));
+                    if (configTop==NULL)
+                    {
+                        configTop = configTemp;
+                    }
+                    else
+                    {
+                        config->nextEntry = configTemp;
+                    }
+                    config = configTemp;
+                    config->availables = 0;
+                    const char* macAddress = json_object_get_string(target,SENSOR_TAG_JSON);
+                    config->macAddress = (char*)malloc(strlen(macAddress)+1);
+                    strcpy(config->macAddress, macAddress);
+                    config->accRange = 0;
+                    JSON_Array* sensorTypes = json_object_get_array(target,SENSOR_TYPES_JSON);
+                    if (sensorTypes==NULL){
+                        // error
+                        LogError("Can't find 'sensor-types' specification.");
+                    }
+                    else{
+                        size_t count = json_array_get_count(sensorTypes);
+                        for (size_t i=0;i<count;i++){
+                            JSON_Object* sensorType = json_array_get_object(sensorTypes,i);
+                            if (sensorType==NULL){
+                                // error
+                                LogError("Can't find 'sensor-type' specification.");
+                            }
+                            const char* typeName = json_object_get_string(sensorType,SENSOR_TYPE_JSON);
+                            if (typeName == NULL){
+                                // error
+                                LogError("Can't find 'sensor-type' value.");
                             }
                             else {
-                                // error
+                                if (g_ascii_strcasecmp(typeName, SENSOR_TYPE_TEMPERATURE)==0){
+                                    config->availables |= SENSOR_MASK_TEMPERATURE;
+                                } else if (g_ascii_strcasecmp(typeName, SENSOR_TYPE_HUMIDITY)==0){
+                                    config->availables |= SENSOR_MASK_HUMIDITY;
+                                } else if (g_ascii_strcasecmp(typeName, SENSOR_TYPE_PRESSURE)==0){
+                                    config->availables |= SENSOR_MASK_PRESSURE;                                
+                                } else if (g_ascii_strcasecmp(typeName, SENSOR_TYPE_MOVEMENT)==0){
+                                    config->availables |= SENSOR_MASK_MOVEMENT;
+                                    const char* movementConfig = json_object_get_string(sensorType,SENSOR_CONFIG_JSON);
+                                    if (movementConfig!=NULL){
+                                        // set accRange
+                                    }
+                                }else if (g_ascii_strcasecmp(typeName, SENSOR_TPYE_BRIGHTNESS)==0){
+                                    config->availables |= SENSOR_MASK_BRIGHTNESS;
+                                }
+                                else {
+                                    // error
+                                }
                             }
                         }
                     }
@@ -418,7 +459,7 @@ void* TI_CC2650_Resolver_ParseConfigurationFromJson(const char* configuration)
             }
         }
     }
-    return config;
+    return configTop;
 }
 
 void TI_CC2650_Resolver_FreeConfiguration(void * configuration)
@@ -447,13 +488,15 @@ void TI_CC2650_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
                 const char* source = ConstMap_GetValue(props, GW_SOURCE_PROPERTY);
                 if (source != NULL && strcmp(source, GW_SOURCE_BLE_TELEMETRY) == 0)
                 {
+                    handle = (TI_CC2650_RESOLVER_HANDLE_DATA*)module;
                //     const char* ble_controller_id = ConstMap_GetValue(props, GW_BLE_CONTROLLER_INDEX_PROPERTY);
-             //       const char* mac_address_str = ConstMap_GetValue(props, GW_MAC_ADDRESS_PROPERTY);
+                    const char* mac_address_str = ConstMap_GetValue(props, GW_MAC_ADDRESS_PROPERTY);
                     const char* timestamp = ConstMap_GetValue(props, GW_TIMESTAMP_PROPERTY);
                     const char* characteristic_uuid = ConstMap_GetValue(props, GW_CHARACTERISTIC_UUID_PROPERTY);
                     const CONSTBUFFER* buffer = Message_GetContent(message);
                     if (buffer != NULL && characteristic_uuid != NULL)
                     {
+                        TI_CC2650_RESOLVER_HANDLE_DATA* targetHandle=NULL;
                         // dispatch the message based on the characteristic uuid
                         size_t i;
                         for (i = 0; i < g_dispatch_entries_length; i++)
@@ -463,20 +506,31 @@ void TI_CC2650_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
                                     g_dispatch_entries[i].characteristic_uuid
                                 ) == 0)
                             {
-                                g_dispatch_entries[i].message_resolver(
-                                    handle,
-                                    g_dispatch_entries[i].name,
-                                    buffer
-                                );
+                                TI_CC2650_RESOLVER_HANDLE_DATA* currentHandle=handle;
+                                while (currentHandle!=NULL){
+                                    if(g_ascii_strcasecmp(mac_address_str, currentHandle->macAddress)==0)
+                                    {
+                                        g_dispatch_entries[i].message_resolver(
+                                            currentHandle,
+                                            g_dispatch_entries[i].name,
+                                            buffer
+                                        );
+                                        targetHandle = currentHandle;
+                                         break;
+                                    }
+                                    currentHandle = currentHandle->nextEntry;
+                                }
+                            }
+                            if (targetHandle!=NULL){
                                 break;
                             }
-                        }
-
-                        if (i == g_dispatch_entries_length)
-                        {
-                            // dispatch to default printer
-                            resolve_default(handle, characteristic_uuid, buffer);
-                        }
+                    if (i == g_dispatch_entries_length)
+                    {
+                        // dispatch to default printer
+                        resolve_default(handle, characteristic_uuid, buffer);
+                    }
+                    if (targetHandle!=NULL){
+                        handle=targetHandle;
                         if((handle->flag & handle->availables)==handle->availables)
                         {
                             JSON_Value* json_init = json_value_init_object();
@@ -511,7 +565,7 @@ void TI_CC2650_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
 
                             char* jsonContent = json_serialize_to_string_pretty(json_init);
                             // I don't know how to remove /'s prefix.
-                            char* tmpBuf = (char*)malloc(strlen(jsonContent));
+                             char* tmpBuf = (char*)malloc(strlen(jsonContent));
                             int tmpi=0;
                             int tmpj=0;
                             while (jsonContent[tmpi]!='\0'){
@@ -525,7 +579,6 @@ void TI_CC2650_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
                                 tmpi++; tmpj++;
                             }
                             tmpBuf[tmpj] = '\0';
-
                             CONSTBUFFER_HANDLE msgContent = CONSTBUFFER_Create((const unsigned char*)tmpBuf, strlen(tmpBuf));
                             MAP_HANDLE msgProps = ConstMap_CloneWriteable(props);
                             MESSAGE_BUFFER_CONFIG msgBufConfig =  {
@@ -533,7 +586,6 @@ void TI_CC2650_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
                                 msgProps
                             };
                             MESSAGE_HANDLE newMessage = Message_CreateFromBuffer(&msgBufConfig);
-
                             if (newMessage == NULL)
                             {
                                 LogError("Message_CreateFromBuffer() failed");
@@ -542,38 +594,38 @@ void TI_CC2650_Resolver_Receive(MODULE_HANDLE module, MESSAGE_HANDLE message)
                             {
                                 if (Broker_Publish(handle->broker, (MODULE_HANDLE)handle, newMessage) != BROKER_OK)
                                 {
-                                    LogError("Broker_Publish() failed");
+                                   LogError("Broker_Publish() failed");
                                 }
                                 handle->flag = 0;
-
                                 Message_Destroy(newMessage);
-                            }
-                            json_free_serialized_string(jsonContent);
-                            json_value_free(json_init);
+                           }
+                           json_free_serialized_string(jsonContent);
+                           json_value_free(json_init);
                             
-                            CONSTBUFFER_Destroy(msgContent);
-                            free(tmpBuf);
+                           CONSTBUFFER_Destroy(msgContent);
+                           free(tmpBuf);
 
               //      ConstMap_Destory(props);
-
-                        }
                     }
-                    else
-                    {
-                        LogError("Message is invalid. Nothing to print.");
                     }
                 }
-            }
-            else
-            {
-                LogError("Message_GetProperties for the message returned NULL");
+                }
+                else
+                {
+                    LogError("Message is invalid. Nothing to print.");
+                }
             }
         }
         else
         {
-            LogError("message is NULL");
+            LogError("Message_GetProperties for the message returned NULL");
         }
     }
+    else
+    {
+        LogError("message is NULL");
+    }
+}
 }
 
 void TI_CC2650_Resolver_Destroy(MODULE_HANDLE module)

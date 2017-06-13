@@ -16,6 +16,8 @@ extern "C"
 #define SENSOR_TYPE_PRESSURE    "pressure"
 #define SENSOR_TYPE_MOVEMENT    "movement"
 
+#define TARGETS_JSON             "targets"
+#define SENSOR_TAG_JSON         "sensor-tag"
 #define SENSOR_TYPES_JSON       "sensor-types"
 #define SENSOR_TYPE_JSON        "sensor-type"
 #define SENSOR_CONFIG_JSON      "config"
@@ -23,6 +25,8 @@ extern "C"
 typedef struct TICC2541_CONFIG_TAG
 {
     int availables;
+    char* macAddress;
+    void* nextEntry;
 } TICC2541_CONFIG;
 
 #ifdef __cplusplus
