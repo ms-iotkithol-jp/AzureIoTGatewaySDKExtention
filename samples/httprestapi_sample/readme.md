@@ -13,3 +13,5 @@ Edit src's json file
 You can use main.c as it is. 
 3. Build and run 
 Let's try! 
+※Please update core/adapters/dynamic_library_windows.c when you use Windows platform. 
+
