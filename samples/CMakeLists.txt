@@ -29,3 +29,5 @@ if(${enable_ble_module} AND LINUX)
     add_subdirectory(ble_gateway)
     add_subdirectory(ble_json_gateway)
 endif()
+
+add_subdirectory(httprestapi_sample)
