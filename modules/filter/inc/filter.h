@@ -11,13 +11,6 @@ extern "C"
 {
 #endif
 
-typedef struct FILTER_CONFIG_TAG
-{
-    int avaliables;
-    char* macAddress;
-    char* resolverlibrary;
-    void* nextEntry;
-} FILTER_CONFIG;
 
 #ifdef __cplusplus
 }

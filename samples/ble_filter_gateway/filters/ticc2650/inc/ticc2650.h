@@ -23,13 +23,6 @@ extern "C"
 #define SENSOR_TYPE_JSON        "sensor-type"
 #define SENSOR_CONFIG_JSON      "config"
 
-typedef struct TICC2650_CONFIG_TAG
-{
-    int availables;
-    int accRange;
-    char* macAddress;
-} TICC2650_CONFIG;
-
 #ifdef __cplusplus
 }
 #endif

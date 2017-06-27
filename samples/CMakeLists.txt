@@ -27,7 +27,12 @@ endif()
 
 if(${enable_ble_module} AND LINUX)
     add_subdirectory(ble_gateway)
-    add_subdirectory(ble_filter_gateway)
+endif()
+
+add_subdirectory(ble_filter_gateway)
+
+if(WIN32)
+    add_subdirectory(filter_sample)
 endif()
 
 add_subdirectory(httprestapi_sample)

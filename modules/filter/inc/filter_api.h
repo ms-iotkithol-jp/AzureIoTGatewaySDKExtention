@@ -4,67 +4,65 @@
 #ifndef _FILTER_API_H
 #define _FILTER_API_H
 
+#include "azure_c_shared_utility/constmap.h"
+#include "azure_c_shared_utility/constbuffer.h"
+
+#include <parson.h>
+
 typedef void* RESOLVER_HANDLE;
 
 typedef struct RESOLVER_API_TAG RESOLVER_API;
+
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-struct RESOLVER_TAG
+	typedef void* RESOLVER_CONTEXT;
+	typedef STRING_HANDLE (*MESSAGE_RESOLVER)(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+
+	typedef struct DIPATCH_ENTRY_TAG
+	{
+		const char* name;
+		const char* characteristic_uuid;
+		MESSAGE_RESOLVER message_resolver;
+	} DIPATCH_ENTRY;
+
+typedef struct RESOLVER_DATA_TAG
 {
-    const RESOLVER_HANDLE* resolver_apis;
+    const RESOLVER_API* resolver_apis;
     RESOLVER_HANDLE resolver_handle;
-};
+} RESOLVER_DATA;
 
-typedef void* FILTER_MASK;
-/* RESULT MAP definition */
-typedef union RESULT_MAP_VALUE_tag
-{
-    const char* stringValue;
-    double numericValue;
-} RESULT_MAP_VALUE;
-typedef enum RESULT_MAP_VALUE_TYPE_tag
-{
-    STRING,
-    NUMERIC
-} RESULT_MAP_VALUE_TYPE;
 
-typedef RESULT_MAP_tag {
-    RESULT_MAP_VALUE_TYPE valueType;
-    RESULT_MAP_VALUE value;
-}
-#define RESULT_MAP_KEY_FILTER_MASK "filter-mask"
-#define RESULT_MAP_KEY_MAC_ADDRESS "mac-address"
-
-typedef void*(rResolver_ParseConfigurationFromJson)(const char* configuration, FILTER_MASK* filterMask);
-typedef void*(rResolver_FreeConfiguration)(void* configuration);
-typedef RESOLVER_HANDLE(*rResolver_Create)(const void* configuration);
+typedef RESOLVER_HANDLE(*rResolver_Create)(MODULE_HANDLE module, const char* resolverName);
+typedef RESOLVER_CONTEXT*(*rResolver_CreateContext)(RESOLVER_HANDLE module, JSON_Object* configuration);
 typedef void(*rResolver_Destroy)(RESOLVER_HANDLE resolverHandle);
-typedef FILTER_MASK(*rResolver_CreateFilterMask)(RESOLVER_HANDLE resolverHandle);
-typedef bool(*rResolver_Resolve)(RESOLVER_HANDLE resolverHandle, const char* characteristics, const char* buf, size_t buf_size, MAP_HANDLE resultMap);
+typedef CONSTBUFFER_HANDLE(*rResolver_Resolve)(RESOLVER_CONTEXT* context, const char* characteristics, const char* timestamp, const CONSTBUFFER* message);
 
 typedef enum RESOLVER_API_VERSION_TAG
 {
     RESOLVER_API_VERSION_1
 } RESOLVER_API_VERSION;
 
+static const RESOLVER_API_VERSION Resolver_ApiGatewayVersion = RESOLVER_API_VERSION_1;
+
 struct RESOLVER_API_TAG
 {
     RESOLVER_API_VERSION version;
-}
+};
 
 typedef struct RESOLVER_API_1_TAG
 {
     RESOLVER_API base;
-    rResolver_ParseConfigurationFromJson Resolver_ParseConfigurationFromJson;
-    rResolver_FreeConfiguration Resolver_FreeConfiguration;
     rResolver_Create Resolver_Create;
-    rResolver_Destory Resolver_Destroy;
+    rResolver_CreateContext Resolver_CreateContext;
     rResolver_Resolve Resolver_Resolve;
+    rResolver_Destroy Resolver_Destroy;
 } RESOLVER_API_1;
+
+typedef const RESOLVER_API* (*rResolver_GetApi)(RESOLVER_API_VERSION resolver_api_version);
 
 #define RESOLVER_GETAPI_NAME ("Resolver_GetApi")
 
@@ -76,8 +74,12 @@ typedef struct RESOLVER_API_1_TAG
 
 #define RESOLVER_STATIC_GETAPI(RESOLVER_NAME) C2(Resolver_GetApi_, RESOLVER_NAME)
 
-RESOLVER_EXPORT const RESOLVER_API* Resolver_GetApi(RESOLVER_API_VERSION gateway_api_version);
+RESOLVER_EXPORT const RESOLVER_API* Resolver_GetApi(RESOLVER_API_VERSION resolver_api_version);
 
+#define RESOLVER_CREATE(resolver_api_ptr) (((const RESOLVER_API_1*)(resolver_api_ptr))->Resolver_Create)
+#define RESOLVER_DESTROY(resolver_api_ptr) (((const RESOLVER_API_1*)(resolver_api_ptr))->Resolver_Destroy)
+#define RESOLVER_CREATE_CONTEXT(resolver_api_ptr) (((const RESOLVER_API_1*)(resolver_api_ptr))->Resolver_CreateContext)
+#define RESOLVER_RESOLVE(resolver_api_ptr) (((const RESOLVER_API_1*)(resolver_api_ptr))->Resolver_Resolve)
 
 #ifdef __cplusplus
 }

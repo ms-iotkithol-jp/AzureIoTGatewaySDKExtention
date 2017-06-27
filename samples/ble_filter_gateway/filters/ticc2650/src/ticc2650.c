@@ -70,11 +70,11 @@ typedef struct TI_CC2650_RESOLVER_DATA_TAG
     TI_CC2650_RESOLVER_CONTEXT_LIST* contexts;
 } TI_CC2650_RESOLVER_DATA;
 
-static STRING_HANDLE resolve_temperature(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
-static STRING_HANDLE resolve_humidity(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
-static STRING_HANDLE resolve_pressure(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
-static STRING_HANDLE resolve_movement(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
-static STRING_HANDLE resolve_brightness(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_temperature(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_humidity(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_pressure(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_movement(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_brightness(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
 
 // setup the message printers
 DIPATCH_ENTRY g_dispatch_entries[] =
@@ -131,7 +131,7 @@ static void sensortag_temp_convert(
 	t = (float)it;
 	*tAmb = t * SCALE_LSB;
 }
-static STRING_HANDLE resolve_temperature(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_temperature(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
     (void)name;
 	TI_CC2650_RESOLVER_CONTEXT* context = (TI_CC2650_RESOLVER_CONTEXT*)handle;
@@ -151,7 +151,7 @@ static STRING_HANDLE resolve_temperature(RESOLVER_DATA_CONTEXT* handle, const ch
 	return NULL;
 }
 
-static STRING_HANDLE resolve_pressure(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_pressure(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
     (void)name;
 	TI_CC2650_RESOLVER_CONTEXT* context = (TI_CC2650_RESOLVER_CONTEXT*)handle;
@@ -192,7 +192,7 @@ static void sensortag_hum_convert(
 	*tHum = ((float)rawHum / 65536.0f) * 100.0f;
 }
 
-static STRING_HANDLE resolve_humidity(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_humidity(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
     (void)name;
 	TI_CC2650_RESOLVER_CONTEXT* context = (TI_CC2650_RESOLVER_CONTEXT*)handle;
@@ -264,7 +264,7 @@ float sensorMpu9250MagConvert(int16_t data)
 	return (float)1.0f * (float)data;
 }
 
-static STRING_HANDLE resolve_movement(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_movement(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
     (void)name;
 	TI_CC2650_RESOLVER_CONTEXT* context = (TI_CC2650_RESOLVER_CONTEXT*)handle;
@@ -298,7 +298,7 @@ static STRING_HANDLE resolve_movement(RESOLVER_DATA_CONTEXT* handle, const char*
 	return NULL;
 }
 
-static STRING_HANDLE resolve_brightness(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_brightness(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
     (void)name;
 	TI_CC2650_RESOLVER_CONTEXT* context = (TI_CC2650_RESOLVER_CONTEXT*)handle;
@@ -319,7 +319,7 @@ static STRING_HANDLE resolve_brightness(RESOLVER_DATA_CONTEXT* handle, const cha
 	return NULL;
 }
 
-static STRING_HANDLE resolve_default(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_default(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
 	(void)handle;
 	(void)name;
@@ -449,7 +449,7 @@ void TICC2650_Destroy(RESOLVER_HANDLE resolverHandle)
 	}
 }
 
-CONSTBUFFER_HANDLE TICC2650_Resolve(RESOLVER_DATA_CONTEXT* context, const char* characteristics, const char* timestamp, const CONSTBUFFER* message)
+CONSTBUFFER_HANDLE TICC2650_Resolve(RESOLVER_CONTEXT* context, const char* characteristics, const char* timestamp, const CONSTBUFFER* message)
 {
 	CONSTBUFFER_HANDLE buffer = NULL;
 	TI_CC2650_RESOLVER_CONTEXT* currentContext = (TI_CC2650_RESOLVER_CONTEXT*)context;

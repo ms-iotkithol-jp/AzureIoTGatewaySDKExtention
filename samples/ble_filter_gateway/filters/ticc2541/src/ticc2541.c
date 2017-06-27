@@ -74,11 +74,11 @@ typedef struct TI_CC2541_RESOLVER_DATA_TAG
     TI_CC2541_RESOLVER_CONTEXT_LIST* contexts;
 } TI_CC2541_RESOLVER_DATA;
 
-static STRING_HANDLE resolve_temperature(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
-static STRING_HANDLE resolve_humidity(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
-static STRING_HANDLE resolve_pressure(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
-static STRING_HANDLE resolve_pressure_calib(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
-static STRING_HANDLE resolve_accelerometer(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_temperature(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_humidity(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_pressure(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_pressure_calib(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
+static STRING_HANDLE resolve_accelerometer(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer);
 
 // setup the message printers
 DIPATCH_ENTRY g_dispatch_entries[] =
@@ -118,7 +118,7 @@ size_t g_dispatch_entries_length = sizeof(g_dispatch_entries) / sizeof(g_dispatc
 */
 // http://processors.wiki.ti.com/index.php/SensorTag_User_Guide
 // http://processors.wiki.ti.com/images/a/a8/BLE_SensorTag_GATT_Server.pdf
-static STRING_HANDLE resolve_temperature(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_temperature(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
 	(void)name;
 	TI_CC2541_RESOLVER_CONTEXT* context = (TI_CC2541_RESOLVER_CONTEXT*)handle;
@@ -157,7 +157,7 @@ static STRING_HANDLE resolve_temperature(RESOLVER_DATA_CONTEXT* handle, const ch
 	return NULL;
 }
 
-static STRING_HANDLE resolve_pressure(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_pressure(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
     (void)name;
 	TI_CC2541_RESOLVER_CONTEXT* context = (TI_CC2541_RESOLVER_CONTEXT*)handle;
@@ -205,7 +205,7 @@ static STRING_HANDLE resolve_pressure(RESOLVER_DATA_CONTEXT* handle, const char*
 	return NULL;
 }
 
-static STRING_HANDLE resolve_pressure_calib(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_pressure_calib(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
     (void)name;
 	TI_CC2541_RESOLVER_CONTEXT* context = (TI_CC2541_RESOLVER_CONTEXT*)handle;
@@ -229,7 +229,7 @@ static STRING_HANDLE resolve_pressure_calib(RESOLVER_DATA_CONTEXT* handle, const
 	return NULL;
 }
 
-static STRING_HANDLE resolve_humidity(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_humidity(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
 	(void)name;
 	TI_CC2541_RESOLVER_CONTEXT* context = (TI_CC2541_RESOLVER_CONTEXT*)handle;
@@ -251,7 +251,7 @@ static STRING_HANDLE resolve_humidity(RESOLVER_DATA_CONTEXT* handle, const char*
 	return NULL;
 }
 
-static STRING_HANDLE resolve_accelerometer(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_accelerometer(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
 	TI_CC2541_RESOLVER_CONTEXT* context = (TI_CC2541_RESOLVER_CONTEXT*)handle;
     (void)name;
@@ -273,7 +273,7 @@ static STRING_HANDLE resolve_accelerometer(RESOLVER_DATA_CONTEXT* handle, const 
 	return NULL;
 }
 
-static STRING_HANDLE resolve_default(RESOLVER_DATA_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
+static STRING_HANDLE resolve_default(RESOLVER_CONTEXT* handle, const char* name, const CONSTBUFFER* buffer)
 {
     (void)handle;
 	(void)name;
@@ -379,7 +379,7 @@ void TICC2541_Destroy(RESOLVER_HANDLE resolverHandle)
 	}
 }
 
-CONSTBUFFER_HANDLE TICC2541_Resolve(RESOLVER_DATA_CONTEXT* context, const char* characteristics, const char* timestamp, const CONSTBUFFER* message)
+CONSTBUFFER_HANDLE TICC2541_Resolve(RESOLVER_CONTEXT* context, const char* characteristics, const char* timestamp, const CONSTBUFFER* message)
 {
 	CONSTBUFFER_HANDLE buffer = NULL;
 	TI_CC2541_RESOLVER_CONTEXT* currentContext = (TI_CC2541_RESOLVER_CONTEXT*)context;
