@@ -1,0 +1,83 @@
+{
+  "modules": [
+    {
+      "name": "logger",
+      "loader": {
+        "name": "native",
+        "entrypoint": {
+          "module.path": "build/modules/logger/liblogger.so"
+        }
+      },
+      "args": {
+        "filename": "log.txt"
+      }
+    },
+    {
+      "name": "filter",
+      "loader": {
+        "name" : "native",
+        "entrypoint" : {
+          "module.path": "build/modules/filter/libfilter.so"
+        }
+      },
+      "args": [
+          {
+              "filter-name":"TI CC2541 Filter",
+              "loader":{
+                  "name":"native",
+                  "entrypoint":{
+                      "module.path":"build/samples/ble_filter_gateway/filters/ticc2541/libticc2541.so"
+                  }
+              },
+              "availables":[
+                  {
+                      "sensor-tag":"11:BB:CC:DD:EE:FF",
+                      "sensor-types":[
+                          {"sensor-type":"temperature"},
+                          {"sensor-type":"humidity"},
+                          {"sensor-type":"pressure"}
+                      ]
+                  }
+              ]
+          },
+        {
+          "filter-name" :"TI CC2650 Filter",
+          "loader" :{
+            "name":"native",
+            "entrypoint":{
+              "module.path": "build/samples/ble_filter_gateway/filters/ticc2650/libticc2650.so"
+            }
+          },
+          "availables" : [
+            {
+              "sensor-tag":"AA:BB:CC:DD:EE:FF",
+              "sensor-types":[
+                {"sensor-type":"temperature"},
+                {"sensor-type":"humidity"},
+                {"sensor-type":"pressure"},
+                {"sensor-type":"movement"},
+                {"sensor-type":"brightness"}
+              ]
+            },
+            {
+              "sensor-tag":"00:BB:CC:DD:EE:FF",
+              "sensor-types":[
+                {"sensor-type":"temperature"},
+                {"sensor-type":"humidity"},
+                {"sensor-type":"pressure"},
+                {"sensor-type":"movement"},
+                {"sensor-type":"brightness"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "source": "filter",
+      "sink": "logger"
+    }
+  ]
+}

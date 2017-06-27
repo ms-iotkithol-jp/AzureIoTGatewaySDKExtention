@@ -11,7 +11,7 @@ include_directories(./common)
 
 if(${enable_ble_module})
     add_subdirectory(ble)
-    add_subdirectory(resolver)
+    add_subdirectory(filter)
 endif()
 
 add_subdirectory(simulated_device)

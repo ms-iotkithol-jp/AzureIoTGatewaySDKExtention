@@ -1,0 +1,83 @@
+{
+  "modules": [
+    {
+      "name": "logger",
+      "loader": {
+        "name": "native",
+        "entrypoint": {
+          "module.path": "..\\..\\..\\modules\\logger\\Debug\\logger.dll"
+        }
+      },
+      "args": {
+        "filename": "log.txt"
+      }
+    },
+    {
+      "name": "filter",
+      "loader": {
+        "name" : "native",
+        "entrypoint" : {
+          "module.path": "..\\..\\..\\modules\\filter\\Debug\\filter.dll"
+        }
+      },
+      "args": [
+          {
+              "filter-name":"TI CC2541 Filter",
+              "loader":{
+                  "name":"native",
+                  "entrypoint":{
+                      "module.path":"..\\..\\..\\samples\\ble_filter_gateway\\filters\\ticc2541\\Debug\\ticc2541.dll"
+                  }
+              },
+              "availables":[
+                  {
+                      "sensor-tag":"11:BB:CC:DD:EE:FF",
+                      "sensor-types":[
+                          {"sensor-type":"temperature"},
+                          {"sensor-type":"humidity"},
+                          {"sensor-type":"pressure"}
+                      ]
+                  }
+              ]
+          },
+        {
+          "filter-name" :"TI CC2650 Filter",
+          "loader" :{
+            "name":"native",
+            "entrypoint":{
+              "module.path": "..\\..\\..\\samples\\ble_filter_gateway\\filters\\ticc2650\\Debug\\ticc2650.dll"
+            }
+          },
+          "availables" : [
+            {
+              "sensor-tag":"AA:BB:CC:DD:EE:FF",
+              "sensor-types":[
+                {"sensor-type":"temperature"},
+                {"sensor-type":"humidity"},
+                {"sensor-type":"pressure"},
+                {"sensor-type":"movement"},
+                {"sensor-type":"brightness"}
+              ]
+            },
+            {
+              "sensor-tag":"00:BB:CC:DD:EE:FF",
+              "sensor-types":[
+                {"sensor-type":"temperature"},
+                {"sensor-type":"humidity"},
+                {"sensor-type":"pressure"},
+                {"sensor-type":"movement"},
+                {"sensor-type":"brightness"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "source": "filter",
+      "sink": "logger"
+    }
+  ]
+}

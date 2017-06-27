@@ -1,0 +1,208 @@
+{
+  "modules": [
+    {
+      "name": "IoTHub",
+      "loader": {
+        "name" : "native",
+        "entrypoint" : {
+          "module.path": "build/modules/iothub/libiothub.so"
+        }
+      },
+      "args": {
+        "IoTHubName": "<<IoT Hub Name>>",
+        "IoTHubSuffix": "azure-devices.net",
+        "Transport": "amqp"
+      }
+    },
+    {
+      "name": "BLE Filter",
+      "loader": {
+        "name" : "native",
+        "entrypoint" : {
+          "module.path": "build/modules/filter/libfilter.so"
+        }
+      },
+      "args": [
+          {
+            "filter-name" :"TI CC2650 Resolver",
+            "loader" :{
+              "name":"native",
+              "entrypoint":{
+                "module.path": "build/samples/ble_filter_gateway/filters/ticc2650/libticc2650.so"
+              }
+            },
+            "availables" : [
+              {
+                "sensor-tag":"<<Sensor Tag MAC ADDRESS - AA:BB:CC:DD:EE:FF>>",
+                "sensor-types":[
+                  {"sensor-type":"temperature"},
+                  {"sensor-type":"humidity"},
+                  {"sensor-type":"pressure"},
+                  {"sensor-type":"movement"},
+                  {"sensor-type":"brightness"}
+                ]
+              }
+            ]
+          }
+        ]
+    },
+    {
+      "name": "mapping",
+      "loader": {
+        "name" : "native",
+        "entrypoint" : {
+          "module.path": "build/modules/identitymap/libidentity_map.so"
+        }
+      },
+      "args": [
+        {
+          "macAddress": "<<Sensor Tag MAC ADDRESS - AA:BB:CC:DD:EE:FF>>",
+          "deviceId": "<<Device ID for IoT Hub>>",
+          "deviceKey": "<<Device Key>>"
+        }
+      ]
+    },
+    {
+      "name": "BLEC2D",
+      "loader": {
+        "name" : "native",
+        "entrypoint" : {
+          "module.path": "build/modules/ble/libble_c2d.so"
+        }
+      },
+      "args": null
+    },
+    {
+      "name": "SensorTag",
+      "loader": {
+        "name" : "native",
+        "entrypoint" : {
+          "module.path": "build/modules/ble/libble.so"
+        }
+      },
+      "args": {
+        "controller_index": 0,
+        "device_mac_address": "<<Sensor Tag MAC ADDRESS - AA:BB:CC:DD:EE:FF>>",
+        "instructions": [
+          {
+            "type": "write_at_init",
+            "characteristic_uuid": "F000AA02-0451-4000-B000-000000000000",
+            "data": "AQ=="
+          },
+          {
+            "type": "write_at_init",
+            "characteristic_uuid": "F000AA22-0451-4000-B000-000000000000",
+            "data": "AQ=="
+          },
+          {
+            "type": "write_at_init",
+            "characteristic_uuid": "F000AA42-0451-4000-B000-000000000000",
+            "data": "AQ=="
+          },
+          {
+            "type": "write_at_init",
+            "characteristic_uuid": "F000AA72-0451-4000-B000-000000000000",
+            "data": "AQ=="
+          },
+          {
+            "type": "write_at_init",
+            "characteristic_uuid": "F000AA82-0451-4000-B000-000000000000",
+            "data": "/wA="
+          },
+          {
+            "type": "read_periodic",
+            "characteristic_uuid": "F000AA01-0451-4000-B000-000000000000",
+            "interval_in_ms": 1000
+          },
+          {
+            "type": "read_periodic",
+            "characteristic_uuid": "F000AA21-0451-4000-B000-000000000000",
+            "interval_in_ms": 1000
+          },
+          {
+            "type": "read_periodic",
+            "characteristic_uuid": "F000AA41-0451-4000-B000-000000000000",
+            "interval_in_ms": 1000
+          },
+          {
+            "type": "read_periodic",
+            "characteristic_uuid": "F000AA71-0451-4000-B000-000000000000",
+            "interval_in_ms": 1000
+          },
+          {
+            "type": "read_periodic",
+            "characteristic_uuid": "F000AA81-0451-4000-B000-000000000000",
+            "interval_in_ms": 1000
+          },
+          {
+            "type": "write_at_exit",
+            "characteristic_uuid": "F000AA02-0451-4000-B000-000000000000",
+            "data": "AA=="
+          },
+          {
+            "type": "write_at_exit",
+            "characteristic_uuid": "F000AA22-0451-4000-B000-000000000000",
+            "data": "AA=="
+          },
+          {
+            "type": "write_at_exit",
+            "characteristic_uuid": "F000AA42-0451-4000-B000-000000000000",
+            "data": "AA=="
+          },
+          {
+            "type": "write_at_exit",
+            "characteristic_uuid": "F000AA72-0451-4000-B000-000000000000",
+            "data": "AA=="
+          },
+          {
+            "type": "write_at_exit",
+            "characteristic_uuid": "F000AA82-0451-4000-B000-000000000000",
+            "data": "AA=="
+          }
+        ]
+      }
+    },
+    {
+      "name": "Logger",
+      "loader": {
+        "name" : "native",
+        "entrypoint" : {
+          "module.path" : "build/modules/logger/liblogger.so"
+        }
+      },
+      "args": {
+        "filename": "./log-file.log"
+      }
+    }
+  ],
+  "links": [
+    {
+      "source": "*",
+      "sink": "Logger"
+    },
+    {
+      "source": "SensorTag",
+      "sink": "TI CC2650 Resolver"
+    },
+    {
+      "source": "TI CC2650 Resolver",
+      "sink": "mapping"
+    },
+    {
+      "source": "mapping",
+      "sink": "IoTHub"
+    },
+    {
+      "source": "IoTHub",
+      "sink": "mapping"
+    },
+    {
+      "source": "mapping",
+      "sink": "BLEC2D"
+    },
+    {
+      "source": "BLEC2D",
+      "sink": "SensorTag"
+    }
+  ]
+}
