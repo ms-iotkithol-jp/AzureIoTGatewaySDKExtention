@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.8.0)
 if (WIN32)
     set(VCPKG_DIR c:/vcpkg/vcpkg)
     set(CMAKE_TOOLCHAIN_FILE c:/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake)
+else()
+    find_path(CPPREST_INCLUDE cpprest/http_client.h)
+    include_directories(${CPPREST_INCLUDE})
 endif()
 
 set(sources

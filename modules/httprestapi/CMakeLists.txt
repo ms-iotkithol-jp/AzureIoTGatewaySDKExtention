@@ -24,6 +24,11 @@ if (WIN32)
     add_definitions(-DBOOST_ALL_DYN_LINK)
     message(STATUS "CMAKE_MODULE_PATH : " ${CMAKE_MODULE_PATH})
 else()
+    find_path(CPPREST_INCLUDE cpprest/http_client.h)
+    find_library(CPPREST_LIB NAMES cpprest_2_9 cpprestd cpprest)
+    find_package(Boost REQUIRED COMPONENTS random system thread filesystem chrono atomic date_time regex)
+    find_package(OpenSSL REQUIRED)
+    set(CPPREST_LIBRARIES ${CPPREST_LIB} Boost::boost Boost::random Boost::system Boost::thread Boost::filesystem Boost::chrono Boost::atomic Boost::date_time Boost::regex OpenSSL::SSL)
 endif()
 
 set(httprestapi_sources
@@ -56,5 +61,3 @@ if(install_modules)
 endif()
 
 add_subdirectory(httprestserver)
-# For Test
-# add_subdirectory(cpptest)

@@ -116,10 +116,10 @@ void HttpRestServer::handle_put(http_request message)
 
 void HttpRestServer::handle_post(http_request message)
 {
-
+	(void)message;
 }
 
 void HttpRestServer::handle_delete(http_request message)
 {
-
+	(void)message;
 }

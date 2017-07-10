@@ -59,7 +59,7 @@ void PublishMessage(void* handle, const char* macAddress, const char* buf, size_
         else
         {
             msgConfig.size = bufSize;
-            msgConfig.source = buf;
+            msgConfig.source = (const unsigned char*)buf;
             msgConfig.sourceProperties = propsMap;
             MESSAGE_HANDLE msg = Message_Create(&msgConfig);
             if (msg == NULL)
