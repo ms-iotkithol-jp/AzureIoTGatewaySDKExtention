@@ -1,0 +1,76 @@
+{
+    "modules": [{
+            "name": "IoTHub",
+            "loader": {
+                "name": "native",
+                "entrypoint": {
+                    "module.path": "../../modules/iothub/libiothub.so"
+                }
+            },
+            "args": {
+                "IoTHubName": "<<Azure IoT Hub Name>>",
+                "IoTHubSuffix": "<<Azure IoT Hub Suffix>>",
+                "Transport": "mqtt"
+            }
+        },
+        {
+            "name": "mapping",
+            "loader": {
+                "name": "native",
+                "entrypoint": {
+                    "module.path": "../../modules/identitymap/libidentity_map.so"
+                }
+            },
+            "args": [{
+                "macAddress": "<< Local ID - AA:BB:CC:DD:EE:FF >>",
+                "deviceId": "<<Azure IoT Hub Device ID>>",
+                "deviceKey": "<<Azure IoT Hub Device Key>>"
+            }]
+        },
+        {
+            "name": "Sensor",
+            "loader": {
+                "name": "outprocess",
+                "entrypoint": {
+                    "activation.type": "none",
+                    "control.id": "/tmp/proxy_sample.control",
+                    "message.id": "/tmp/proxy_sample.message"
+                }
+            },
+            "args": { "macAddress": "<< Local ID - AA:BB:CC:DD:EE:FF >>" }
+        },
+        {
+            "name": "Logger",
+            "loader": {
+                "name": "native",
+                "entrypoint": {
+                    "module.path": "../../modules/logger/liblogger.so"
+                }
+            },
+            "args": {
+                "filename": "<</path/to/log-file.log>>"
+            }
+        }
+    ],
+    "links": [{
+            "source": "*",
+            "sink": "Logger"
+        },
+        {
+            "source": "Sensor",
+            "sink": "mapping"
+        },
+        {
+            "source": "mapping",
+            "sink": "IoTHub"
+        },
+        {
+            "source": "IoTHub",
+            "sink": "mapping"
+        },
+        {
+            "source": "mapping",
+            "sink": "Sensor"
+        }
+    ]
+}
