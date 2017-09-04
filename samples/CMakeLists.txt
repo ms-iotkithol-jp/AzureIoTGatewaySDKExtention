@@ -35,4 +35,5 @@ if(WIN32)
     add_subdirectory(filter_sample)
 endif()
 
-add_subdirectory(httprestapi_sample)
+# When you use httprestapi, delete #
+# add_subdirectory(httprestapi_sample)
