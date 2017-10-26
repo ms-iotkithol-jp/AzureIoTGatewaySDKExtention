@@ -499,8 +499,7 @@ CONSTBUFFER_HANDLE TICC2650_Resolve(RESOLVER_CONTEXT* context, const char* chara
 			if (json_status == JSONFailure)
 			{
 				LogError("json message set - failed");
-				BUFFER_HANDLE tmpBuffer = BUFFER_create(message->buffer, message->size);
-				STRING_HANDLE base64 = Base64_Encode(tmpBuffer);
+				STRING_HANDLE base64 = Base64_Encode_Bytes(message->buffer, message->size);
 				json_status = json_object_set_string(json, "message", STRING_c_str(base64));
 			}
 			else
