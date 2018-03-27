@@ -753,7 +753,7 @@ static int thread_message_control_receiver_thread_worker(void* context)
                             }
                             current_receiver = current_receiver->next;
                         }
-                        THREAD_MESSAGE_HANDLING_SENDER_FOR_RECEIVER* current_sender = sender;
+                  //      THREAD_MESSAGE_HANDLING_SENDER_FOR_RECEIVER* current_sender = sender;
                         sender = sender->next;
 //                      if (Unlock(current_sender->sender_module_info->senderThMsg->lock) != LOCK_OK) {
 //                          LogError("Unock for senderThMsg in thread_message_control_receiver_thread_worker failed");
@@ -1243,43 +1243,39 @@ BROKER_RESULT Broker_Publish(BROKER_HANDLE broker, MODULE_HANDLE source, MESSAGE
                 }
                 else
                 {
-                    time_t current = time(NULL);
+//                    time_t current = time(NULL);
 
-                        int32_t buf_size;
-                        /*Codes_SRS_BROKER_17_025: [ Broker_Publish shall allocate a nanomsg buffer the size of the serialized message + sizeof(MODULE_HANDLE). ]*/
-                        buf_size = msg_size + sizeof(MODULE_HANDLE) + sizeof(int32_t);
-                            buf_size += sizeof(int32_t);
-                        void* nn_msg = nn_allocmsg(buf_size, 0);
-                        if (nn_msg == NULL)
+                    int32_t buf_size;
+                    /*Codes_SRS_BROKER_17_025: [ Broker_Publish shall allocate a nanomsg buffer the size of the serialized message + sizeof(MODULE_HANDLE). ]*/
+                    buf_size = msg_size + sizeof(MODULE_HANDLE);
+                    void* nn_msg = nn_allocmsg(buf_size, 0);
+                    if (nn_msg == NULL)
+                    {
+                        /*Codes_SRS_BROKER_13_053: [This function shall return BROKER_ERROR if an underlying API call to the platform causes an error or BROKER_OK otherwise.]*/
+                        LogError("unable to serialize a message [%p]", msg);
+                        result = BROKER_ERROR;
+                    }
+                    else
+                    {
+                        /*Codes_SRS_BROKER_17_026: [ Broker_Publish shall copy source into the beginning of the nanomsg buffer. ]*/
+                        unsigned char *nn_msg_bytes = (unsigned char *)nn_msg;
+                        memcpy(nn_msg_bytes, &source, sizeof(MODULE_HANDLE));
+                        /*Codes_SRS_BROKER_17_027: [ Broker_Publish shall serialize the message into the remainder of the nanomsg buffer. ]*/
+                        nn_msg_bytes += sizeof(MODULE_HANDLE);
+                        Message_ToByteArray(message, nn_msg_bytes, msg_size);
+                        result = BROKER_OK;
+
+                        /*Codes_SRS_BROKER_17_010: [ Broker_Publish shall send a message on the publish_socket. ]*/
+                        int nbytes = nn_send(broker_data->publish_socket, &nn_msg, NN_MSG, 0);
+                        if (nbytes != buf_size)
                         {
                             /*Codes_SRS_BROKER_13_053: [This function shall return BROKER_ERROR if an underlying API call to the platform causes an error or BROKER_OK otherwise.]*/
-                            LogError("unable to serialize a message [%p]", msg);
+                            LogError("unable to send a message [%p]", msg);
+                            /*Codes_SRS_BROKER_17_012: [ Broker_Publish shall free the message. ]*/
+                            nn_freemsg(nn_msg);
                             result = BROKER_ERROR;
                         }
-                        else
-                        {
-                            /*Codes_SRS_BROKER_17_026: [ Broker_Publish shall copy source into the beginning of the nanomsg buffer. ]*/
-                            unsigned char *nn_msg_bytes = (unsigned char *)nn_msg;
-                            memcpy(nn_msg_bytes, &source, sizeof(MODULE_HANDLE));
-                            /*Codes_SRS_BROKER_17_027: [ Broker_Publish shall serialize the message into the remainder of the nanomsg buffer. ]*/
-                            nn_msg_bytes += sizeof(MODULE_HANDLE);
-                            nn_msg_bytes += sizeof(int32_t);
-                                *((int32_t*)nn_msg_bytes) = msg_size;
-                                nn_msg_bytes += sizeof(int32_t);
-                                Message_ToByteArray(message, nn_msg_bytes, msg_size);
-                                result = BROKER_OK;
-
-                            /*Codes_SRS_BROKER_17_010: [ Broker_Publish shall send a message on the publish_socket. ]*/
-                            int nbytes = nn_send(broker_data->publish_socket, &nn_msg, NN_MSG, 0);
-                            if (nbytes != buf_size)
-                            {
-                                /*Codes_SRS_BROKER_13_053: [This function shall return BROKER_ERROR if an underlying API call to the platform causes an error or BROKER_OK otherwise.]*/
-                                LogError("unable to send a message [%p]", msg);
-                                /*Codes_SRS_BROKER_17_012: [ Broker_Publish shall free the message. ]*/
-                                nn_freemsg(nn_msg);
-                                result = BROKER_ERROR;
-                            }
-                        }
+                    }
                     /*Codes_SRS_BROKER_17_012: [ Broker_Publish shall free the message. ]*/
                     Message_Destroy(msg);
                     /*Codes_SRS_BROKER_17_011: [ Broker_Publish shall free the serialized message data. ]*/
