@@ -88,11 +88,30 @@ typedef struct BROKER_MODULEINFO_TAG
 
 }BROKER_MODULEINFO;
 
+static int nn_really_close(int s)
+{
+    int result;
+    do
+    {
+        result = nn_close(s);
+    } while (result == -1 && nn_errno() == EINTR);
+    return result;
+}
+
+static int nn_really_send(int s, const void* buf, size_t len, int flags)
+{
+    int result;
+    do
+    {
+        result = nn_send(s, buf, len, flags);
+    } while (result == -1 && nn_errno() == EINTR);
+    return result;
+}
+
 typedef struct THREAD_MESSASGE_HANDLING_SENDER_FOR_RECEIVER_TAG {
     BROKER_MODULEINFO* sender_module_info;
     void* next;
 } THREAD_MESSAGE_HANDLING_SENDER_FOR_RECEIVER;
-
 
 
 static STRING_HANDLE construct_url()
@@ -184,7 +203,7 @@ BROKER_HANDLE Broker_Create(void)
                         /*Codes_SRS_BROKER_13_003: [ This function shall return NULL if an underlying API call to the platform causes an error. ]*/
                         singlylinkedlist_destroy(result->modules);
                         Lock_Deinit(result->modules_lock);
-                        nn_close(result->publish_socket);
+                        nn_really_close(result->publish_socket);
                         free(result);
                         LogError("Unable to generate unique url.");
                         result = NULL;
@@ -198,7 +217,7 @@ BROKER_HANDLE Broker_Create(void)
                             LogError("nanomsg bind failed");
                             singlylinkedlist_destroy(result->modules);
                             Lock_Deinit(result->modules_lock);
-                            nn_close(result->publish_socket);
+                            nn_really_close(result->publish_socket);
                             STRING_delete(result->url);                
                             free(result);
                             result = NULL;
@@ -434,7 +453,7 @@ static BROKER_RESULT start_module(BROKER_MODULEINFO* module_info, STRING_HANDLE 
         {
             /*Codes_SRS_BROKER_13_047: [ This function shall return BROKER_ERROR if an underlying API call to the platform causes an error or BROKER_OK otherwise. ]*/
             LogError("nn_connect failed");
-            nn_close(module_info->receive_socket);
+            nn_really_close(module_info->receive_socket);
             module_info->receive_socket = -1;
             result = BROKER_ERROR;
         }
@@ -446,7 +465,7 @@ static BROKER_RESULT start_module(BROKER_MODULEINFO* module_info, STRING_HANDLE 
             {
                 /*Codes_SRS_BROKER_13_047: [ This function shall return BROKER_ERROR if an underlying API call to the platform causes an error or BROKER_OK otherwise. ]*/
                 LogError("nn_setsockopt failed");
-                nn_close(module_info->receive_socket);
+                nn_really_close(module_info->receive_socket);
                 module_info->receive_socket = -1;
                 result = BROKER_ERROR;
             }
@@ -461,7 +480,7 @@ static BROKER_RESULT start_module(BROKER_MODULEINFO* module_info, STRING_HANDLE 
                 {
                     /*Codes_SRS_BROKER_13_047: [ This function shall return BROKER_ERROR if an underlying API call to the platform causes an error or BROKER_OK otherwise. ]*/
                     LogError("ThreadAPI_Create failed");
-                    nn_close(module_info->receive_socket);
+                    nn_really_close(module_info->receive_socket);
                     result = BROKER_ERROR;
                 }
                 else
@@ -483,11 +502,11 @@ static int stop_module(int publish_socket, BROKER_MODULEINFO* module_info)
 
     /*Codes_SRS_BROKER_17_021: [ This function shall send a quit signal to the worker thread by sending BROKER_MODULEINFO::quit_message_guid to the publish_socket. ]*/
     /* send the unique quite id for this module */
-    if ((quit_result = nn_send(publish_socket, STRING_c_str(module_info->quit_message_guid), BROKER_GUID_SIZE, 0)) < 0)
+    if ((quit_result = nn_really_send(publish_socket, STRING_c_str(module_info->quit_message_guid), BROKER_GUID_SIZE, 0)) < 0)
     {
         /*Codes_SRS_BROKER_17_015: [ This function shall close the BROKER_MODULEINFO::receive_socket. ]*/
         /* at the cost of a data race, we will close the socket to terminate the thread */
-        nn_close(module_info->receive_socket);
+        nn_really_close(module_info->receive_socket);
         LogError("unable to peacefully close thread for module [%p], nn_send error [%d], taking harsher methods", module_info, quit_result);
     }
     else
@@ -497,13 +516,13 @@ static int stop_module(int publish_socket, BROKER_MODULEINFO* module_info)
         {
             /*Codes_SRS_BROKER_17_015: [ This function shall close the BROKER_MODULEINFO::receive_socket. ]*/
             /* at the cost of a data race, we will close the socket to terminate the thread */
-            nn_close(module_info->receive_socket);
+            nn_really_close(module_info->receive_socket);
             LogError("unable to peacefully close thread for module [%p], Lock error, taking harsher methods", module_info );
         }
         else
         {
             /*Codes_SRS_BROKER_17_015: [ This function shall close the BROKER_MODULEINFO::receive_socket. ]*/
-            close_result = nn_close(module_info->receive_socket);
+            close_result = nn_really_close(module_info->receive_socket);
             if (close_result < 0)
             {
                 LogError("Receive socket close failed for module at  item [%p] failed", module_info);
@@ -1118,7 +1137,7 @@ static void broker_decrement_ref(BROKER_HANDLE broker)
                 LogError("WARNING: There are still active modules attached to the broker and the broker is being destroyed.");
             }
             /* May want to do nn_shutdown first for cleanliness. */
-            nn_close(broker_data->publish_socket);
+            nn_really_close(broker_data->publish_socket);
             STRING_delete(broker_data->url);
             singlylinkedlist_destroy(broker_data->modules);
             Lock_Deinit(broker_data->modules_lock);
