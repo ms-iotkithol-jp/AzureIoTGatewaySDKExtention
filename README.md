@@ -10,7 +10,7 @@ This sample is also used in [IoT Kit Hand-on content](https://doc.co/NsXXfD) as 
 Please see [HTTP REST API Comm Module](samples/httprestapi_sample/readme.md) 
 
 # REMOTE MODULE UPDATE extension 
-Please see [How to use it](samples/remote_update/README.md) 
+Please see [How to use it](samples/remote_update/README.md) and [Utility tool](utility/remoteupdateutil/README.md)
 
 ## License 
 All contents are derived from [Azure IoT Edge SDK](http://github.com/azure/iot-edge) so that the license follows the license of the site. 

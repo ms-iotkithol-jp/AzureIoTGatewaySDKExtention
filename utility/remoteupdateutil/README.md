@@ -1,6 +1,7 @@
 # Azure IoT Edge Version 1 - Remote Update Utility 
 ## Overview 
-description 
+This utility tool generate Azure IoT Edge SDK ver 1 remote update extention related files. 
+ 
 ## Command Line 
 dotnet remoteupdateutil \<common-options>  
 \<common-options> := -scs *scs* [ -ics <*ics*> -it <*it*> } -ecjf <*ecjf*> -bc <*bc*> -edp <*edp*> -dv <*dv*> -om <*om*> [ -ot <*ot*> ] -ed <*ed*>  
