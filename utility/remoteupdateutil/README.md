@@ -11,7 +11,7 @@ dotnet remoteupdateutil \<common-options>
 > > <*IoT Hub transport*> := amqp | mqtt  
 >  
 > --blob-container | -bc <*Blob container name for modules on cloud*>  
-> --edge-deploy-path | -edp <*Module deploy path on edge*>  
+> --edge-deploy-path | -edp <*Module deploy configuration path on edge*>  
 > --deploy-version | -dv <*Version of the deploy configuration*>  
 > --edge-config-json-file | -ecjf <*Configuration file name of remote updatable edge*>  
 > --blob-module-config-file | -om <*module configuration file name on bloud*>  
@@ -38,7 +38,10 @@ dotnet remoteupdateutil \<common-options> \<sample-json-options>
 \<sample-json-options> := -ljcf <*ljcf*> -wd <*wd*>  
 > --local-json-config-file | -ljcf <*Souce configuration json file on build development*>  
 > --work-dir | -wd <*Base directory for ljcf's module path*>  
-
+> --local-module-version | -lmv <*module version*>  
+> >    <*module version*> := <*module name*>:<*module version*>  
+> >    This specification is necessary because original json configuration has no this value.  
+  
 ## Examples 
 Following samples explain how to specify remote update modules using samples/hello_world.  
 ### by option 

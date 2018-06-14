@@ -77,7 +77,18 @@ namespace remoteupdateutil
                     isConfigJson=true;
 
                 }
-                else if (args[argIndex]=="-ecjf"|| args[argIndex]=="--edge-config-json-file"){
+                else if (args[argIndex]=="-lmv"||args[argIndex]=="--local-module-version")
+                {
+                    argIndex++;
+                    if (configInfo.ModuleVersions==null)
+                    {
+                        configInfo.ModuleVersions=new Dictionary<string,string>();
+                    }
+                    var moduleVersion = args[argIndex++].Split(":");
+                    configInfo.ModuleVersions.Add(moduleVersion[0],moduleVersion[1]);
+                }
+                else if (args[argIndex]=="-ecjf"|| args[argIndex]=="--edge-config-json-file")
+                {
                     argIndex++;
                     configInfo.EdgeConfigJsonFileName = args[argIndex++];
                 }
@@ -126,7 +137,8 @@ namespace remoteupdateutil
                         }
                     }
                 }
-                else if (args[argIndex]=="--blob-module-config-file"|| args[argIndex] =="-om"){
+                else if (args[argIndex]=="--blob-module-config-file"|| args[argIndex] =="-om")
+                {
                     // modules config file name
                     argIndex++;
                     configInfo.ModuleConfigJsonFileName=args[argIndex++];
@@ -188,17 +200,25 @@ namespace remoteupdateutil
                     mi.args=new List<KeyValuePair<string,string>>();
                     mi.name=m["name"];
                     mi.version=m["version"];
+                    if (string.IsNullOrEmpty(mi.version))
+                    {
+                        mi.version = configInfo.ModuleVersions[mi.name];
+                    }
                     dynamic loader = m["loader"];
                     mi.loader.name=loader["name"];
                     dynamic entryPoint = loader["entrypoint"];
-                    var modulePath =entryPoint["module.path"];
+                    var modulePath =entryPoint["module.path"].Value;
                     var mpFI = new FileInfo(modulePath);
                     libs.Add(mi.name,mpFI.FullName);
-                    mi.loader.entrypoint.modulePath= di.gateway.deployPath + Path.PathSeparator + mpFI.Name;
+                    var dpFI = new FileInfo(di.gateway.deployPath);
+                    mi.loader.entrypoint.modulePath= dpFI.DirectoryName + Path.DirectorySeparatorChar + mpFI.Name;
                     dynamic args = m["args"];
-                    foreach(dynamic arg in args.Properties()){
-                        dynamic argv = arg.Value;
-                        mi.args.Add(new KeyValuePair<string,string>(arg.Name,argv.Value.ToString()));
+                    if (args!=null)
+                    {
+                        foreach(dynamic arg in args.Properties()){
+                            dynamic argv = arg.Value;
+                            mi.args.Add(new KeyValuePair<string,string>(arg.Name,argv.Value.ToString()));
+                        }
                     }
                     di.modules.Add(mi);
                 }
@@ -221,7 +241,7 @@ namespace remoteupdateutil
 
             var cloudStorageAccount = CloudStorageAccount.Parse(connectionString);
             blobClient = cloudStorageAccount.CreateCloudBlobClient();
-            var container = blobClient.GetContainerReference(configInfo.StorageConnectionString);
+            var container = blobClient.GetContainerReference(configInfo.BlobContainerName);
             await container.CreateIfNotExistsAsync();
             var now =DateTime.Now;
             // container should be created before this tool execution!
@@ -277,7 +297,8 @@ namespace remoteupdateutil
         {
             var fi = new FileInfo(localFilePath);
             string blobName = fi.Name;
-            if (!string.IsNullOrEmpty(folderName)){
+            if (!string.IsNullOrEmpty(folderName))
+            {
                 blobName = folderName+"/"+blobName;
             }
             var blob = container.GetBlockBlobReference(blobName);
@@ -317,6 +338,7 @@ namespace remoteupdateutil
 
         public string CurrentWorkDirectory{get;set;}
         public string LocalJsonConfigFile{get;set;}
+        public Dictionary<string,string> ModuleVersions {get;set;}
     }
 
     public class GatewayInfo {
