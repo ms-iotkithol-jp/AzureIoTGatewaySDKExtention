@@ -5,8 +5,11 @@ cmake_minimum_required(VERSION 2.8.12)
 
 add_subdirectory(hello_world)
 add_subdirectory(simulated_device_cloud_upload)
-add_subdirectory(experimental/events_sample)
+if(${enable_event_system})
+    add_subdirectory(experimental/events_sample)
+endif()
 add_subdirectory(azure_functions_sample)
+add_subdirectory(dynamically_add_module_sample)
 
 if(${enable_dotnet_binding})
     add_subdirectory(dotnet_binding_sample)
@@ -24,15 +27,16 @@ if(${enable_nodejs_binding})
     add_subdirectory(nodejs_simple_sample)
 endif()
 
+if (${enable_native_remote_modules})
+    add_subdirectory(native_module_host_sample)
+endif()
+
+if (${enable_native_remote_modules} OR ${enable_nodejs_remote_modules})
+    add_subdirectory(proxy_sample)
+endif()
 
 if(${enable_ble_module} AND LINUX)
     add_subdirectory(ble_gateway)
-endif()
-
-add_subdirectory(ble_filter_gateway)
-
-if(WIN32)
-    add_subdirectory(filter_sample)
 endif()
 
 # When you use httprestapi, delete #
